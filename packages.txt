@@ -1,10 +1,4 @@
-# System packages installed by Streamlit Community Cloud (apt-get).
-# Pango + HarfBuzz let WeasyPrint build PDFs.
 libpango-1.0-0
 libpangoft2-1.0-0
-libharfbuzz0b
-libffi-dev
-# Noto fonts cover every Indian script, so local-language food names
-# render properly in the PDF instead of appearing as empty boxes.
+libharfbuzz-subset0
 fonts-noto-core
-fonts-noto-ui-core
