@@ -11,9 +11,6 @@ from datetime import date
 from html import escape
 
 CLINIC_NAME = "Dr Shantanu Samanta©️"
-CLINIC_TAGLINE = "Smart Diet Clinic · Senior Clinical Nutritionist & Dietitian"
-CLINIC_ADDRESS = "New Town, Kolkata"
-CLINIC_PHONE = "+91 87775 68960"
 
 MEAL_ORDER = ["breakfast", "lunch", "snack", "dinner"]
 MEAL_LABEL = {
@@ -49,10 +46,8 @@ body {{
 
 .header {{ text-align: center; border-bottom: 3px solid #0284c7; padding-bottom: 10px; margin-bottom: 14px; }}
 .header h1 {{ margin: 0; font-size: 20pt; color: #075985; letter-spacing: 0.5px; }}
-.header .tagline {{ color: #0284c7; font-size: 9pt; font-weight: 600; margin-top: 3px; }}
-.header .contact {{ color: #6b7280; font-size: 8.5pt; margin-top: 4px; }}
 .doc-title {{
-  display: inline-block; margin-top: 8px; padding: 3px 16px;
+  display: inline-block; margin-top: 10px; padding: 3px 16px;
   border: 2px solid #0284c7; border-radius: 20px;
   color: #0284c7; font-weight: 700; font-size: 10pt;
   text-transform: uppercase; letter-spacing: 2px;
@@ -157,8 +152,6 @@ def build_html(patient: dict, plan: dict) -> str:
 
 <div class="header">
   <h1>{escape(CLINIC_NAME)}</h1>
-  <div class="tagline">{escape(CLINIC_TAGLINE)}</div>
-  <div class="contact">{escape(CLINIC_ADDRESS)} &nbsp;|&nbsp; {escape(CLINIC_PHONE)}</div>
   <div class="doc-title">Diet Chart</div>
 </div>
 
