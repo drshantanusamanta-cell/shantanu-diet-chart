@@ -7,17 +7,23 @@ Two outputs from one HTML source:
                       Needs Noto fonts installed (see packages.txt) for local-language text.
 """
 
+import re
 from datetime import date
 from html import escape
 
 CLINIC_NAME = "Dr Shantanu Samanta©️"
 
-MEAL_ORDER = ["breakfast", "lunch", "snack", "dinner"]
+CLINIC_LINE = "Consultant General Physician, Kolkata · Appointments: 87775 68960 / 70444 31447 · drshantanusamanta.in"
+
+MEAL_ORDER = ["early_morning", "breakfast", "mid_morning", "lunch", "snack", "dinner", "bedtime"]
 MEAL_LABEL = {
-    "breakfast": "Breakfast",
-    "lunch": "Lunch",
-    "snack": "Evening Snack",
-    "dinner": "Dinner",
+    "early_morning": "Early Morning (6–7 am)",
+    "breakfast": "Breakfast (8–9 am)",
+    "mid_morning": "Mid-Morning (11 am)",
+    "lunch": "Lunch (1–2 pm)",
+    "snack": "Evening Snack (5 pm)",
+    "dinner": "Dinner (8–9 pm)",
+    "bedtime": "Bedtime (10 pm)",
 }
 
 # Noto covers every Indian script. The browser or WeasyPrint picks whichever
@@ -96,6 +102,15 @@ table.items tr:last-child td {{ border-bottom: none; }}
 .donts {{ background: #fef2f2; border: 1px solid #fecaca; }}
 .donts h3 {{ color: #b91c1c; }}
 
+.sub {{ color: #64748b; font-size: 8.5pt; margin-top: 4px; }}
+.urgent {{ background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; color: #7f1d1d;
+  border-radius: 6px; padding: 7px 10px; margin-bottom: 8px; font-size: 9.5pt; page-break-inside: avoid; }}
+.checked {{ margin-top: 9px; padding-top: 8px; border-top: 1px solid #bae6fd; }}
+.checked ul {{ margin: 3px 0 0; padding-left: 15px; }}
+.checked li {{ font-size: 9pt; margin-bottom: 2px; }}
+.tablet {{ background: #fffbeb; border: 1px solid #fde68a; color: #78350f; border-radius: 6px;
+  padding: 6px 10px; margin-bottom: 10px; font-size: 9.5pt; font-weight: 600; page-break-inside: avoid; }}
+.footer a {{ color: #075985; text-decoration: none; }}
 .footer {{ margin-top: 16px; padding-top: 10px; border-top: 2px solid #e0f2fe; font-size: 8pt; color: #6b7280; page-break-inside: avoid; }}
 .footer .refs {{ color: #075985; font-weight: 700; margin-bottom: 3px; }}
 .footer ul {{ margin: 0 0 10px; padding-left: 15px; }}
@@ -130,15 +145,35 @@ def _meal_block(meal_key: str, options: list) -> str:
 </div>"""
 
 
-def build_html(patient: dict, plan: dict) -> str:
+def _bold(text: str) -> str:
+    """Escape, then turn **x** into <b>x</b>."""
+    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escape(str(text)))
+
+
+def build_html(patient: dict, plan: dict, analysis: dict | None = None) -> str:
     """Return a complete, standalone HTML document for the diet chart."""
+    analysis = analysis or {}
     meals_html = "".join(
         _meal_block(key, (plan.get("meals") or {}).get(key) or []) for key in MEAL_ORDER
     )
+    if analysis.get("thyroxine"):
+        meals_html = ('<div class="tablet">&#9200; Thyroid tablet first: take it with plain water on an empty '
+                      'stomach and wait about 60 minutes before tea, milk or breakfast. Keep calcium or iron '
+                      'tablets a few hours away.</div>' + meals_html)
+    urgent = "".join(f'<div class="urgent">&#9888; {_bold(u)}</div>' for u in analysis.get("urgent") or [])
+    checked = ""
+    if analysis.get("lines"):
+        checked = ('<div class="checked"><span class="label">Checked details used (calculated, not AI)</span><ul>'
+                   + "".join(f"<li>{_bold(x)}</li>" for x in analysis["lines"]) + "</ul></div>")
+    for_what = ", ".join(patient.get("condition_list") or [])
 
     dos = "".join(f"<li>{escape(str(d))}</li>" for d in plan.get("dos") or [])
     donts = "".join(f"<li>{escape(str(d))}</li>" for d in plan.get("donts") or [])
-    refs = "".join(f"<li>{escape(str(r))}</li>" for r in plan.get("references") or [])
+    ref_list = analysis.get("references")
+    if ref_list:
+        refs = "".join(f'<li><a href="{escape(u)}">{escape(t)}</a></li>' for t, u in ref_list)
+    else:  # charts made before verified references were added
+        refs = "".join(f"<li>{escape(str(r))}</li>" for r in plan.get("references") or [])
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -152,8 +187,11 @@ def build_html(patient: dict, plan: dict) -> str:
 
 <div class="header">
   <h1>{escape(CLINIC_NAME)}</h1>
+  <div class="sub">{escape(CLINIC_LINE)}</div>
   <div class="doc-title">Diet Chart</div>
 </div>
+
+{urgent}
 
 <div class="patient">
   <table>
@@ -169,6 +207,7 @@ def build_html(patient: dict, plan: dict) -> str:
       <td><span class="label">Diet</span><span class="value">{escape(str(patient.get('preferences', '')))}</span></td>
       <td><span class="label">Activity</span><span class="value" style="font-size:9pt">{escape(str(patient.get('activity', '')).split('(')[0].strip())}</span></td>
     </tr>
+    {f'<tr><td colspan="4"><span class="label">Chart for</span><span class="value">{escape(for_what)}</span></td></tr>' if for_what else ''}
   </table>
 
   <div class="assessment">
@@ -177,6 +216,7 @@ def build_html(patient: dict, plan: dict) -> str:
     <span class="pill">Target: {escape(str(plan.get('caloricNeeds', '')))}</span>
     <span class="pill">{escape(str(plan.get('macronutrientSplit', '')))}</span>
   </div>
+  {checked}
 </div>
 
 {meals_html}
@@ -187,11 +227,11 @@ def build_html(patient: dict, plan: dict) -> str:
 </div>
 
 <div class="footer">
-  <div class="refs">References &amp; Guidelines</div>
+  <div class="refs">References (standard guidelines this chart follows)</div>
   <ul>{refs}</ul>
   <div class="sign">
     <div class="name">{escape(CLINIC_NAME)}</div>
-    <div class="disclaimer">This is an indicative chart. Please consult a nutritionist for further advice.</div>
+    <div class="disclaimer">This is an indicative sample chart. Exact needs depend on health, medicines and activity, so please review it with Dr. Samanta.</div>
   </div>
 </div>
 

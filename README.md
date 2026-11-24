@@ -6,6 +6,25 @@ a print-ready A4 PDF.
 
 ---
 
+## What's new (Nov 2026) — same features as the drshantanu website diet chart
+
+- **"Chart for" conditions:** Healthy eating, Type 2 diabetes, High BP, Heart / cholesterol,
+  Weight loss, **Kidney disease (CKD)** and **Hypothyroid**. Picking one shows its report fields.
+- **Optional report fields:** fasting / after-meal sugar, HbA1c, insulin; BP; LDL, triglycerides;
+  urea, creatinine, potassium, dialysis; TSH, thyroxine. Any decimal is accepted (e.g. TSH 7.8).
+- **Checked numbers, calculated by the software (never the AI):** BMI with Indian cut-offs,
+  eGFR (CKD-EPI 2021) and CKD stage, CKD protein target (KDIGO 2024 / KDOQI 2020 on dialysis),
+  energy target (Mifflin-St Jeor × activity, never below 1200 kcal) and urgent warnings for
+  dangerous values (very low/high sugar, very high BP, potassium ≥ 6, triglycerides ≥ 1000).
+- **7 meals × 4 options:** early morning, breakfast, mid-morning, lunch, evening snack, dinner,
+  bedtime (bedtime for insulin users / underweight).
+- **Thyroxine timing** printed on the chart (tablet ~60 min before breakfast, ATA 2014).
+- **Verified references** attached by the software according to the conditions (ICMR-NIN 2024,
+  RSSDI 2022, ADA 2026, DASH, AHA 2021, KDIGO 2024, KDOQI 2020, CKD-EPI 2021, ATA 2014,
+  Misra 2025, Mifflin 1990). The AI no longer writes citations. Edit them in `diet_profile.py`.
+
+---
+
 ## What you need first
 
 - A **GitHub** account — free, at github.com
@@ -150,6 +169,7 @@ you just get the HTML download instead.
 | File | What it does |
 | --- | --- |
 | `app.py` | The app itself — sign-in, intake form, meal tracker, downloads |
+| `diet_profile.py` | Checked numbers (BMI, eGFR, protein, energy, warnings) and the verified references |
 | `ai.py` | Talks to Gemini; keeps the API key server-side, retries on transient errors |
 | `render.py` | Builds the A4 chart as HTML, then converts it to PDF |
 | `requirements.txt` | Python packages Streamlit installs |
@@ -161,7 +181,8 @@ you just get the HTML download instead.
 
 ## Clinical caution
 
-Every chart is AI-generated and labelled indicative. Calorie figures, the BMI reading and
-any lab interpretation are model estimates, not verified calculations. Read each chart
+Every chart is AI-generated and labelled indicative. BMI, eGFR, protein and energy targets
+are calculated by the software; per-option calorie figures and any reading of uploaded report
+photos are still model estimates. Read each chart
 before it reaches a patient — especially the numbers, and especially for anyone with
 diabetes, renal impairment, or on a restricted diet.
